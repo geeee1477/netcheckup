@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func CheckTCP(target string, port string) {
+func CheckTCP(target string, port string) bool {
 	address := target + ":" + port
 
 	fmt.Println("\n[TCP] Checking:", address)
@@ -19,10 +19,11 @@ func CheckTCP(target string, port string) {
 		fmt.Println(" - service not running")
 		fmt.Println(" - network connectivity issue")
 		fmt.Println("Error:", err)
-		return
+		return false
 	}
 
 	conn.Close()
 
 	fmt.Println("[TCP] ✅ Port", port, "is reachable")
+	return true
 }

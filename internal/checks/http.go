@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func CheckHTTP(target string, port string) {
+func CheckHTTP(target string, port string) bool {
 	url := "http://" + target
 
 	if port == "443" {
@@ -27,11 +27,13 @@ func CheckHTTP(target string, port string) {
 		fmt.Println(" - TLS/SSL issue")
 		fmt.Println(" - firewall or proxy blocking")
 		fmt.Println("Error:", err)
-		return
+		return false
 	}
 
 	defer resp.Body.Close()
 
 	fmt.Println("[HTTP] ✅ Response received")
 	fmt.Println("Status:", resp.Status)
+
+	return true
 }

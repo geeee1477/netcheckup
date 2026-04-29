@@ -5,7 +5,7 @@ import (
 	"net"
 )
 
-func ResolveDNS(target string) {
+func ResolveDNS(target string) bool {
 	fmt.Println("[DNS] Checking:", target)
 
 	ips, err := net.LookupHost(target)
@@ -16,7 +16,7 @@ func ResolveDNS(target string) {
 		fmt.Println(" - no internet connectivity")
 		fmt.Println(" - misconfigured resolver")
 		fmt.Println("Error:", err)
-		return
+		return false
 	}
 
 	if len(ips) == 0 {
@@ -24,7 +24,7 @@ func ResolveDNS(target string) {
 		fmt.Println("→ Possible causes:")
 		fmt.Println(" - DNS misconfiguration")
 		fmt.Println(" - domain has no A/AAAA records")
-		return
+		return false
 	}
 
 	fmt.Println("[DNS] ✅ Resolution successful")
@@ -34,4 +34,6 @@ func ResolveDNS(target string) {
 	for _, ip := range ips {
 		fmt.Println(" -", ip)
 	}
+
+	return true
 }
