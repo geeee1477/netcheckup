@@ -29,11 +29,8 @@ func ResolveDNS(target string) bool {
 
 	fmt.Println("[DNS] ✅ Resolution successful")
 	fmt.Println("→ DNS is working correctly")
-
-	fmt.Println("\nResolved IPs:")
-	for _, ip := range ips {
-		fmt.Println(" -", ip)
-	}
+	fmt.Println("Resolved IPs:", len(ips), "found")
+	fmt.Println("Primary IP:", ips[0])
 
 	return true
 }
