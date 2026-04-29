@@ -16,5 +16,7 @@ func main() {
 	target := os.Args[1]
 
 	fmt.Println("netcheckup starting...")
+
 	checks.ResolveDNS(target)
+	checks.CheckTCP(target, "443")
 }
