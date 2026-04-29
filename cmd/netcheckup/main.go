@@ -39,12 +39,10 @@ func main() {
 
 	result := checks.Result{
 		DNS_OK:  dnsOK,
+		PING_OK: pingOK,
 		TCP_OK:  tcpOK,
 		HTTP_OK: httpOK,
 	}
-
-	// Ping wird aktuell nur angezeigt, noch nicht in Summary integriert
-	_ = pingOK
 
 	checks.PrintSummary(result)
 }
