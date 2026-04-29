@@ -49,10 +49,14 @@ func PrintSummary(r Result) {
 	}
 
 	if r.DNS_OK && !r.PING_OK && !r.TCP_OK {
-		fmt.Println("→ Likely network, routing, or firewall issue")
-		return
+    		fmt.Println("→ Host not reachable at network level (routing, firewall, or offline)")
+	    	return
 	}
 
+	if r.DNS_OK && !r.PING_OK && r.TCP_OK {
+	    	fmt.Println("→ ICMP (ping) likely blocked, but service is reachable")
+	    	return
+	}
 	if r.DNS_OK && r.PING_OK && !r.TCP_OK {
 		fmt.Println("→ Host is reachable, but the selected TCP port may be blocked or closed")
 		return
