@@ -17,12 +17,14 @@ func main() {
 	target := os.Args[1]
 	port := "443"
 
+	// simple flag parsing
 	for i := 2; i < len(os.Args); i++ {
 		if os.Args[i] == "--port" && i+1 < len(os.Args) {
 			port = os.Args[i+1]
 		}
 	}
 
+	// remove accidental port in target
 	if strings.Contains(target, ":") {
 		parts := strings.Split(target, ":")
 		target = parts[0]
@@ -31,6 +33,7 @@ func main() {
 	fmt.Println("netcheckup starting...\n")
 
 	dnsOK := checks.ResolveDNS(target)
+	pingOK := checks.CheckPing(target)
 	tcpOK := checks.CheckTCP(target, port)
 	httpOK := checks.CheckHTTP(target, port)
 
@@ -39,6 +42,9 @@ func main() {
 		TCP_OK:  tcpOK,
 		HTTP_OK: httpOK,
 	}
+
+	// Ping wird aktuell nur angezeigt, noch nicht in Summary integriert
+	_ = pingOK
 
 	checks.PrintSummary(result)
 }
