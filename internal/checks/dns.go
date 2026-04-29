@@ -10,11 +10,27 @@ func ResolveDNS(target string) {
 
 	ips, err := net.LookupHost(target)
 	if err != nil {
-		fmt.Println("[DNS] ❌ Failed:", err)
+		fmt.Println("[DNS] ❌ Resolution failed")
+		fmt.Println("→ Possible causes:")
+		fmt.Println(" - DNS server unreachable")
+		fmt.Println(" - no internet connectivity")
+		fmt.Println(" - misconfigured resolver")
+		fmt.Println("Error:", err)
 		return
 	}
 
-	fmt.Println("[DNS] ✅ Resolved IPs:")
+	if len(ips) == 0 {
+		fmt.Println("[DNS] ⚠️ No IPs returned")
+		fmt.Println("→ Possible causes:")
+		fmt.Println(" - DNS misconfiguration")
+		fmt.Println(" - domain has no A/AAAA records")
+		return
+	}
+
+	fmt.Println("[DNS] ✅ Resolution successful")
+	fmt.Println("→ DNS is working correctly")
+
+	fmt.Println("\nResolved IPs:")
 	for _, ip := range ips {
 		fmt.Println(" -", ip)
 	}
