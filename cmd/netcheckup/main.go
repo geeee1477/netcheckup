@@ -32,15 +32,16 @@ func main() {
 	}
 
 	target := flag.Arg(0)
+	verbose := !*jsonFlag
 
-	if !*jsonFlag {
+	if verbose {
 		fmt.Println("netcheckup starting...\n")
 	}
 
-	dnsOK := checks.ResolveDNS(target)
-	pingOK := checks.CheckPing(target)
-	tcpOK := checks.CheckTCP(target, *port)
-	httpOK := checks.CheckHTTP(target, *port)
+	dnsOK := checks.ResolveDNS(target, verbose)
+	pingOK := checks.CheckPing(target, verbose)
+	tcpOK := checks.CheckTCP(target, *port, verbose)
+	httpOK := checks.CheckHTTP(target, *port, verbose)
 
 	result := checks.Result{
 		Target:  target,
