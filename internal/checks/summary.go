@@ -53,19 +53,19 @@ func DiagnosisMessage(r Result) string {
 		return "→ Host blocks ICMP/ping, but TCP and HTTP are working"
 	}
 
-	if r.DNS_OK && !r.PING_OK && !r.TCP_OK {
+	if r.DNS_OK && !r.PING_OK && !r.TCP_OK && !r.HTTP_OK {
 		return "→ Host not reachable at network level (routing, firewall, or offline)"
 	}
 
-	if r.DNS_OK && !r.PING_OK && r.TCP_OK {
-		return "→ ICMP (ping) likely blocked, but service is reachable"
+	if r.DNS_OK && !r.PING_OK && r.TCP_OK && !r.HTTP_OK {
+		return "→ ICMP is blocked and HTTP service may be failing"
 	}
 
-	if r.DNS_OK && r.PING_OK && !r.TCP_OK {
-		return "→ Host is reachable, but the selected TCP port may be blocked or closed"
+	if r.DNS_OK && r.PING_OK && !r.TCP_OK && !r.HTTP_OK {
+		return "→ Port likely blocked or service not reachable (TCP + HTTP failed)"
 	}
 
-	if r.TCP_OK && !r.HTTP_OK {
+	if r.DNS_OK && r.PING_OK && r.TCP_OK && !r.HTTP_OK {
 		return "→ TCP port is reachable, but the application or HTTP service may be failing"
 	}
 
