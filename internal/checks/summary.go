@@ -1,12 +1,16 @@
 package checks
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 type Result struct {
-	DNS_OK  bool
-	PING_OK bool
-	TCP_OK  bool
-	HTTP_OK bool
+	Target  string `json:"target"`
+	DNS_OK  bool   `json:"dns_ok"`
+	PING_OK bool   `json:"ping_ok"`
+	TCP_OK  bool   `json:"tcp_ok"`
+	HTTP_OK bool   `json:"http_ok"`
 }
 
 func PrintSummary(r Result) {
@@ -37,37 +41,47 @@ func PrintSummary(r Result) {
 	}
 
 	fmt.Println()
+	fmt.Println(DiagnosisMessage(r))
+}
 
+func DiagnosisMessage(r Result) string {
 	if !r.DNS_OK {
-		fmt.Println("→ Likely DNS or general connectivity issue")
-		return
+		return "→ Likely DNS or general connectivity issue"
 	}
 
 	if r.DNS_OK && !r.PING_OK && r.TCP_OK && r.HTTP_OK {
-		fmt.Println("→ Host blocks ICMP/ping, but TCP and HTTP are working")
-		return
+		return "→ Host blocks ICMP/ping, but TCP and HTTP are working"
 	}
 
 	if r.DNS_OK && !r.PING_OK && !r.TCP_OK {
-    		fmt.Println("→ Host not reachable at network level (routing, firewall, or offline)")
-	    	return
+		return "→ Host not reachable at network level (routing, firewall, or offline)"
 	}
 
 	if r.DNS_OK && !r.PING_OK && r.TCP_OK {
-	    	fmt.Println("→ ICMP (ping) likely blocked, but service is reachable")
-	    	return
+		return "→ ICMP (ping) likely blocked, but service is reachable"
 	}
+
 	if r.DNS_OK && r.PING_OK && !r.TCP_OK {
-		fmt.Println("→ Host is reachable, but the selected TCP port may be blocked or closed")
-		return
+		return "→ Host is reachable, but the selected TCP port may be blocked or closed"
 	}
 
 	if r.TCP_OK && !r.HTTP_OK {
-		fmt.Println("→ TCP port is reachable, but the application or HTTP service may be failing")
-		return
+		return "→ TCP port is reachable, but the application or HTTP service may be failing"
 	}
 
 	if r.DNS_OK && r.PING_OK && r.TCP_OK && r.HTTP_OK {
-		fmt.Println("→ Target is fully reachable and functioning")
+		return "→ Target is fully reachable and functioning"
 	}
+
+	return "→ No clear diagnosis available"
+}
+
+func PrintJSON(r Result) {
+	data, err := json.MarshalIndent(r, "", "  ")
+	if err != nil {
+		fmt.Println("JSON error:", err)
+		return
+	}
+
+	fmt.Println(string(data))
 }
