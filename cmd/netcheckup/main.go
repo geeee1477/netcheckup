@@ -10,15 +10,18 @@ import (
 
 func main() {
 	port := flag.String("port", "443", "Port to check (default: 443)")
+	jsonFlag := flag.Bool("json", false, "Output as JSON")
+
 	flag.Usage = func() {
 		fmt.Println("netcheckup - network diagnostic tool")
 		fmt.Println()
 		fmt.Println("Usage:")
-		fmt.Println("  netcheckup [--port <port>] <target>")
+		fmt.Println("  netcheckup [--port <port>] [--json] <target>")
 		fmt.Println()
 		fmt.Println("Examples:")
 		fmt.Println("  netcheckup google.com")
 		fmt.Println("  netcheckup --port 80 google.com")
+		fmt.Println("  netcheckup --json google.com")
 	}
 
 	flag.Parse()
@@ -38,11 +41,16 @@ func main() {
 	httpOK := checks.CheckHTTP(target, *port)
 
 	result := checks.Result{
+		Target:  target,
 		DNS_OK:  dnsOK,
 		PING_OK: pingOK,
 		TCP_OK:  tcpOK,
 		HTTP_OK: httpOK,
 	}
 
-	checks.PrintSummary(result)
+	if *jsonFlag {
+		checks.PrintJSON(result)
+	} else {
+		checks.PrintSummary(result)
+	}
 }
