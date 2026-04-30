@@ -33,7 +33,9 @@ func main() {
 
 	target := flag.Arg(0)
 
-	fmt.Println("netcheckup starting...\n")
+	if !*jsonFlag {
+		fmt.Println("netcheckup starting...\n")
+	}
 
 	dnsOK := checks.ResolveDNS(target)
 	pingOK := checks.CheckPing(target)
@@ -50,7 +52,8 @@ func main() {
 
 	if *jsonFlag {
 		checks.PrintJSON(result)
-	} else {
-		checks.PrintSummary(result)
+		return
 	}
+
+	checks.PrintSummary(result)
 }
