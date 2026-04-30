@@ -10,10 +10,17 @@ import (
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Println("Usage: netcheckup <target> [--port <port>]")
+		fmt.Println("netcheckup - network diagnostic tool")
+		fmt.Println()
+		fmt.Println("Usage:")
+		fmt.Println("  netcheckup <target> [--port <port>]")
+		fmt.Println()
+		fmt.Println("Examples:")
+		fmt.Println("  netcheckup google.com")
+		fmt.Println("  netcheckup google.com --port 80")
 		return
 	}
-
+	
 	target := os.Args[1]
 	port := "443"
 
