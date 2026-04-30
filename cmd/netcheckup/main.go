@@ -1,48 +1,41 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/geeee1477/netcheckup/internal/checks"
 )
 
 func main() {
-	if len(os.Args) < 2 {
+	port := flag.String("port", "443", "Port to check (default: 443)")
+	flag.Usage = func() {
 		fmt.Println("netcheckup - network diagnostic tool")
 		fmt.Println()
 		fmt.Println("Usage:")
-		fmt.Println("  netcheckup <target> [--port <port>]")
+		fmt.Println("  netcheckup [--port <port>] <target>")
 		fmt.Println()
 		fmt.Println("Examples:")
 		fmt.Println("  netcheckup google.com")
-		fmt.Println("  netcheckup google.com --port 80")
-		return
-	}
-	
-	target := os.Args[1]
-	port := "443"
-
-	// simple flag parsing
-	for i := 2; i < len(os.Args); i++ {
-		if os.Args[i] == "--port" && i+1 < len(os.Args) {
-			port = os.Args[i+1]
-		}
+		fmt.Println("  netcheckup --port 80 google.com")
 	}
 
-	// remove accidental port in target
-	if strings.Contains(target, ":") {
-		parts := strings.Split(target, ":")
-		target = parts[0]
+	flag.Parse()
+
+	if flag.NArg() < 1 {
+		flag.Usage()
+		os.Exit(1)
 	}
+
+	target := flag.Arg(0)
 
 	fmt.Println("netcheckup starting...\n")
 
 	dnsOK := checks.ResolveDNS(target)
 	pingOK := checks.CheckPing(target)
-	tcpOK := checks.CheckTCP(target, port)
-	httpOK := checks.CheckHTTP(target, port)
+	tcpOK := checks.CheckTCP(target, *port)
+	httpOK := checks.CheckHTTP(target, *port)
 
 	result := checks.Result{
 		DNS_OK:  dnsOK,
