@@ -62,9 +62,8 @@ func DiagnosisMessage(r Result) string {
 	}
 
 	if r.DNS_OK && r.PING_OK && !r.TCP_OK && !r.HTTP_OK {
-		return "→ Port likely blocked or service not reachable (TCP + HTTP failed)"
+		return "→ TCP port likely blocked or service down (no TCP + HTTP response)"
 	}
-
 	if r.DNS_OK && r.PING_OK && r.TCP_OK && !r.HTTP_OK {
 		return "→ TCP port is reachable, but the application or HTTP service may be failing"
 	}
