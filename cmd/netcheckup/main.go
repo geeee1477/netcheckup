@@ -44,8 +44,7 @@ func main() {
 	dnsOK, primaryIP := checks.ResolveDNS(target, verbose)
 	pingOK := checks.CheckPing(target, verbose)
 	tcpOK := checks.CheckTCP(target, *port, *timeout, *retries, verbose)
-	httpOK := checks.CheckHTTP(target, *port, verbose)
-
+	httpOK := checks.CheckHTTP(target, *port, *timeout, *retries, verbose)
 	result := checks.Result{
 		Target:    target,
 		PrimaryIP: primaryIP,

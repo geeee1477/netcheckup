@@ -6,53 +6,47 @@ import (
 	"time"
 )
 
-func CheckHTTP(target string, port string, verbose bool) bool {
-	url := "http://" + target
+func CheckHTTP(target string, port string, timeoutSeconds int, retries int, verbose bool) bool {
+	url := "https://" + target
+	if port != "443" {
+		url = "http://" + target + ":" + port
+	}
 
-	if port == "443" {
-		url = "https://" + target
+	timeout := time.Duration(timeoutSeconds) * time.Second
+	client := http.Client{
+		Timeout: timeout,
 	}
 
 	if verbose {
 		fmt.Println("\n[HTTP] Checking:", url)
 	}
 
-	client := &http.Client{
-		Timeout: 5 * time.Second,
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			return nil
-		},
-	}
+	for attempt := 1; attempt <= retries; attempt++ {
+		resp, err := client.Get(url)
+		if err == nil {
+			defer resp.Body.Close()
 
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
+			if verbose {
+				fmt.Println("[HTTP] ✅ Response received")
+				fmt.Println("Status:", resp.Status)
+			}
+
+			return true
+		}
+
 		if verbose {
-			fmt.Println("[HTTP] ❌ Request build failed")
+			fmt.Printf("[HTTP] Attempt %d/%d failed\n", attempt, retries)
 			fmt.Println("Error:", err)
 		}
-		return false
 	}
-
-	req.Header.Set("User-Agent", "netcheckup/1.0")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		if verbose {
-			fmt.Println("[HTTP] ❌ Request failed")
-			fmt.Println("→ Possible causes:")
-			fmt.Println(" - web server down")
-			fmt.Println(" - TLS/SSL issue")
-			fmt.Println(" - firewall or proxy blocking")
-			fmt.Println("Error:", err)
-		}
-		return false
-	}
-	defer resp.Body.Close()
 
 	if verbose {
-		fmt.Println("[HTTP] ✅ Response received")
-		fmt.Println("Status:", resp.Status)
+		fmt.Println("[HTTP] ❌ Request failed")
+		fmt.Println("→ Possible causes:")
+		fmt.Println(" - web server down")
+		fmt.Println(" - TLS/SSL issue")
+		fmt.Println(" - firewall or proxy blocking")
 	}
 
-	return resp.StatusCode < 500
+	return false
 }
