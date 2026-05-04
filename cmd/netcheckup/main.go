@@ -10,17 +10,20 @@ import (
 
 func main() {
 	port := flag.String("port", "443", "Port to check (default: 443)")
+	timeout := flag.Int("timeout", 3, "Timeout in seconds for TCP check (default: 3)")
+	retries := flag.Int("retries", 2, "Number of TCP retries (default: 2)")
 	jsonFlag := flag.Bool("json", false, "Output as JSON")
 
 	flag.Usage = func() {
 		fmt.Println("netcheckup - network diagnostic tool")
 		fmt.Println()
 		fmt.Println("Usage:")
-		fmt.Println("  netcheckup [--port <port>] [--json] <target>")
+		fmt.Println("  netcheckup --retries 3 google.com")
 		fmt.Println()
 		fmt.Println("Examples:")
 		fmt.Println("  netcheckup google.com")
 		fmt.Println("  netcheckup --port 80 google.com")
+		fmt.Println("  netcheckup --timeout 2 google.com")
 		fmt.Println("  netcheckup --json google.com")
 	}
 
@@ -40,7 +43,7 @@ func main() {
 
 	dnsOK, primaryIP := checks.ResolveDNS(target, verbose)
 	pingOK := checks.CheckPing(target, verbose)
-	tcpOK := checks.CheckTCP(target, *port, verbose)
+	tcpOK := checks.CheckTCP(target, *port, *timeout, *retries, verbose)
 	httpOK := checks.CheckHTTP(target, *port, verbose)
 
 	result := checks.Result{

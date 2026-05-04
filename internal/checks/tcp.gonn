@@ -6,9 +6,9 @@ import (
 	"time"
 )
 
-func CheckTCP(target string, port string, timeoutSeconds int, retries int, verbose bool) bool {
+func CheckTCP(target string, port string, timeoutSeconds int, retries int, verbose bool) bool
 	address := target + ":" + port
-	attempts := 2
+	attempts := retries
 	timeout := time.Duration(timeoutSeconds) * time.Second
 
 	if verbose {

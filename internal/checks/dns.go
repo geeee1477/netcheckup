@@ -36,7 +36,7 @@ func ResolveDNS(target string, verbose bool) (bool, string) {
 	primaryIP := ""
 	for _, ip := range ips {
 		parsed := net.ParseIP(ip)
-		if parsed != nil && parsed.To4() != nil {
+		if parsed != nil && parsed.To4() != nil && !parsed.IsPrivate() {
 			primaryIP = ip
 			break
 		}
