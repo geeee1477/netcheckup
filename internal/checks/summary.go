@@ -7,6 +7,7 @@ import (
 
 type Result struct {
 	Target    string `json:"target"`
+	PrimaryIP string `json:"primary_ip,omitempty"`
 	DNS_OK    bool   `json:"dns_ok"`
 	PING_OK   bool   `json:"ping_ok"`
 	TCP_OK    bool   `json:"tcp_ok"`

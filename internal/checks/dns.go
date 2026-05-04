@@ -5,7 +5,7 @@ import (
 	"net"
 )
 
-func ResolveDNS(target string, verbose bool) bool {
+func ResolveDNS(target string, verbose bool) (bool, string) {
 	if verbose {
 		fmt.Println("[DNS] Checking:", target)
 	}
@@ -20,7 +20,7 @@ func ResolveDNS(target string, verbose bool) bool {
 			fmt.Println(" - misconfigured resolver")
 			fmt.Println("Error:", err)
 		}
-		return false
+		return false, ""
 	}
 
 	if len(ips) == 0 {
@@ -30,7 +30,7 @@ func ResolveDNS(target string, verbose bool) bool {
 			fmt.Println(" - DNS misconfiguration")
 			fmt.Println(" - domain has no A/AAAA records")
 		}
-		return false
+		return false, ""
 	}
 
 	if verbose {
@@ -40,5 +40,5 @@ func ResolveDNS(target string, verbose bool) bool {
 		fmt.Println("Primary IP:", ips[0])
 	}
 
-	return true
+	return true, ips[0]
 }
