@@ -6,11 +6,12 @@ import (
 )
 
 type Result struct {
-	Target  string `json:"target"`
-	DNS_OK  bool   `json:"dns_ok"`
-	PING_OK bool   `json:"ping_ok"`
-	TCP_OK  bool   `json:"tcp_ok"`
-	HTTP_OK bool   `json:"http_ok"`
+	Target    string `json:"target"`
+	DNS_OK    bool   `json:"dns_ok"`
+	PING_OK   bool   `json:"ping_ok"`
+	TCP_OK    bool   `json:"tcp_ok"`
+	HTTP_OK   bool   `json:"http_ok"`
+	Diagnosis string `json:"diagnosis"`
 }
 
 func PrintSummary(r Result) {
@@ -73,6 +74,38 @@ func DiagnosisMessage(r Result) string {
 	}
 
 	return "→ No clear diagnosis available"
+}
+
+func DiagnosisCode(r Result) string {
+	if !r.DNS_OK {
+		return "dns_or_connectivity_issue"
+	}
+
+	if r.DNS_OK && !r.PING_OK && r.TCP_OK && r.HTTP_OK {
+		return "icmp_blocked_service_reachable"
+	}
+
+	if r.DNS_OK && !r.PING_OK && !r.TCP_OK && !r.HTTP_OK {
+		return "network_routing_firewall_or_offline"
+	}
+
+	if r.DNS_OK && !r.PING_OK && r.TCP_OK && !r.HTTP_OK {
+		return "icmp_blocked_http_failing"
+	}
+
+	if r.DNS_OK && r.PING_OK && !r.TCP_OK && !r.HTTP_OK {
+		return "tcp_port_blocked_or_service_down"
+	}
+
+	if r.DNS_OK && r.PING_OK && r.TCP_OK && !r.HTTP_OK {
+		return "http_service_failing"
+	}
+
+	if r.DNS_OK && r.PING_OK && r.TCP_OK && r.HTTP_OK {
+		return "target_fully_reachable"
+	}
+
+	return "unknown"
 }
 
 func PrintJSON(r Result) {

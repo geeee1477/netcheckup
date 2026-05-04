@@ -38,45 +38,23 @@ func main() {
 		fmt.Println("netcheckup starting...\n")
 	}
 
-	var dnsOK, pingOK, tcpOK, httpOK bool
+	dnsOK := checks.ResolveDNS(target, verbose)
+	pingOK := checks.CheckPing(target, verbose)
+	tcpOK := checks.CheckTCP(target, *port, verbose)
+	httpOK := checks.CheckHTTP(target, *port, verbose)
 
-	done := make(chan bool)
-
-	// DNS
-	go func() {
-		dnsOK = checks.ResolveDNS(target, verbose)
-		done <- true
-	}()
-
-	// PING
-	go func() {
-		pingOK = checks.CheckPing(target, verbose)
-		done <- true
-	}()
-
-	// TCP
-	go func() {
-		tcpOK = checks.CheckTCP(target, *port, verbose)
-		done <- true
-	}()
-
-	// HTTP
-	go func() {
-		httpOK = checks.CheckHTTP(target, *port, verbose)
-		done <- true
-	}()
-
-	// warten bis alle fertig sind
-	for i := 0; i < 4; i++ {
-		<-done
-	}
-	
 	result := checks.Result{
 		Target:  target,
 		DNS_OK:  dnsOK,
 		PING_OK: pingOK,
 		TCP_OK:  tcpOK,
 		HTTP_OK: httpOK,
+	}
+
+	if *jsonFlag {
+		result.Diagnosis = checks.DiagnosisCode(result)
+	} else {
+		result.Diagnosis = checks.DiagnosisMessage(result)
 	}
 
 	if *jsonFlag {

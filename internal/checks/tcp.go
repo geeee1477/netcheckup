@@ -8,29 +8,38 @@ import (
 
 func CheckTCP(target string, port string, verbose bool) bool {
 	address := target + ":" + port
+	attempts := 2
+	timeout := 3 * time.Second
 
 	if verbose {
 		fmt.Println("\n[TCP] Checking:", address)
 	}
 
-	conn, err := net.DialTimeout("tcp", address, 3*time.Second)
-	if err != nil {
+	for attempt := 1; attempt <= attempts; attempt++ {
+		conn, err := net.DialTimeout("tcp", address, timeout)
+		if err == nil {
+			conn.Close()
+
+			if verbose {
+				fmt.Println("[TCP] ✅ Port", port, "is reachable")
+			}
+
+			return true
+		}
+
 		if verbose {
-			fmt.Println("[TCP] ❌ Connection failed")
-			fmt.Println("→ Possible causes:")
-			fmt.Println(" - firewall blocking the port")
-			fmt.Println(" - service not running")
-			fmt.Println(" - network connectivity issue")
+			fmt.Printf("[TCP] Attempt %d/%d failed\n", attempt, attempts)
 			fmt.Println("Error:", err)
 		}
-		return false
 	}
-
-	conn.Close()
 
 	if verbose {
-		fmt.Println("[TCP] ✅ Port", port, "is reachable")
+		fmt.Println("[TCP] ❌ Connection failed")
+		fmt.Println("→ Possible causes:")
+		fmt.Println(" - firewall blocking the port")
+		fmt.Println(" - service not running")
+		fmt.Println(" - network connectivity issue")
 	}
 
-	return true
+	return false
 }
