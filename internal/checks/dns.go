@@ -33,12 +33,25 @@ func ResolveDNS(target string, verbose bool) (bool, string) {
 		return false, ""
 	}
 
+	primaryIP := ""
+	for _, ip := range ips {
+		parsed := net.ParseIP(ip)
+		if parsed != nil && parsed.To4() != nil {
+			primaryIP = ip
+			break
+		}
+	}
+
+	if primaryIP == "" {
+		primaryIP = ips[0]
+	}
+
 	if verbose {
 		fmt.Println("[DNS] ✅ Resolution successful")
 		fmt.Println("→ DNS is working correctly")
 		fmt.Println("Resolved IPs:", len(ips), "found")
-		fmt.Println("Primary IP:", ips[0])
+		fmt.Println("Primary IP:", primaryIP)
 	}
 
-	return true, ips[0]
+	return true, primaryIP
 }
