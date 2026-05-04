@@ -4,26 +4,28 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"sync"
 
 	"github.com/geeee1477/netcheckup/internal/checks"
 )
 
 func main() {
 	port := flag.String("port", "443", "Port to check (default: 443)")
-	timeout := flag.Int("timeout", 3, "Timeout in seconds for TCP check (default: 3)")
-	retries := flag.Int("retries", 2, "Number of TCP retries (default: 2)")
+	timeout := flag.Int("timeout", 3, "Timeout in seconds (default: 3)")
+	retries := flag.Int("retries", 2, "Number of retries (default: 2)")
 	jsonFlag := flag.Bool("json", false, "Output as JSON")
 
 	flag.Usage = func() {
 		fmt.Println("netcheckup - network diagnostic tool")
 		fmt.Println()
 		fmt.Println("Usage:")
-		fmt.Println("  netcheckup --retries 3 google.com")
+		fmt.Println("  netcheckup [--port <port>] [--timeout <seconds>] [--retries <n>] [--json] <target>")
 		fmt.Println()
 		fmt.Println("Examples:")
 		fmt.Println("  netcheckup google.com")
 		fmt.Println("  netcheckup --port 80 google.com")
 		fmt.Println("  netcheckup --timeout 2 google.com")
+		fmt.Println("  netcheckup --retries 3 google.com")
 		fmt.Println("  netcheckup --json google.com")
 	}
 
@@ -41,10 +43,40 @@ func main() {
 		fmt.Println("netcheckup starting...\n")
 	}
 
-	dnsOK, primaryIP := checks.ResolveDNS(target, verbose)
-	pingOK := checks.CheckPing(target, verbose)
-	tcpOK := checks.CheckTCP(target, *port, *timeout, *retries, verbose)
-	httpOK := checks.CheckHTTP(target, *port, *timeout, *retries, verbose)
+	var (
+		dnsOK, pingOK, tcpOK, httpOK bool
+		primaryIP                    string
+		wg                           sync.WaitGroup
+	)
+
+	wg.Add(4)
+
+	// DNS
+	go func() {
+		defer wg.Done()
+		dnsOK, primaryIP = checks.ResolveDNS(target, verbose)
+	}()
+
+	// PING
+	go func() {
+		defer wg.Done()
+		pingOK = checks.CheckPing(target, verbose)
+	}()
+
+	// TCP
+	go func() {
+		defer wg.Done()
+		tcpOK = checks.CheckTCP(target, *port, *timeout, *retries, verbose)
+	}()
+
+	// HTTP
+	go func() {
+		defer wg.Done()
+		httpOK = checks.CheckHTTP(target, *port, *timeout, *retries, verbose)
+	}()
+
+	wg.Wait()
+
 	result := checks.Result{
 		Target:    target,
 		PrimaryIP: primaryIP,
