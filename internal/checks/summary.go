@@ -8,10 +8,17 @@ import (
 type Result struct {
 	Target    string `json:"target"`
 	PrimaryIP string `json:"primary_ip,omitempty"`
-	DNS_OK    bool   `json:"dns_ok"`
-	PING_OK   bool   `json:"ping_ok"`
-	TCP_OK    bool   `json:"tcp_ok"`
-	HTTP_OK   bool   `json:"http_ok"`
+
+	DNS_OK  bool `json:"dns_ok"`
+	PING_OK bool `json:"ping_ok"`
+	TCP_OK  bool `json:"tcp_ok"`
+	HTTP_OK bool `json:"http_ok"`
+
+	DNS_MS  int64 `json:"dns_ms,omitempty"`
+	PING_MS int64 `json:"ping_ms,omitempty"`
+	TCP_MS  int64 `json:"tcp_ms,omitempty"`
+	HTTP_MS int64 `json:"http_ms,omitempty"`
+
 	Diagnosis string `json:"diagnosis"`
 }
 
@@ -19,27 +26,27 @@ func PrintSummary(r Result) {
 	fmt.Println("\n========== SUMMARY ==========")
 
 	if r.DNS_OK {
-		fmt.Println("✔ DNS resolution works")
+		fmt.Printf("✔ DNS resolution works (%d ms)\n", r.DNS_MS)
 	} else {
-		fmt.Println("❌ DNS resolution failed")
+		fmt.Printf("❌ DNS resolution failed (%d ms)\n", r.DNS_MS)
 	}
 
 	if r.PING_OK {
-		fmt.Println("✔ Host reachable via ping")
+		fmt.Printf("✔ Host reachable via ping (%d ms)\n", r.PING_MS)
 	} else {
-		fmt.Println("❌ Host not reachable via ping")
+		fmt.Printf("❌ Host not reachable via ping (%d ms)\n", r.PING_MS)
 	}
 
 	if r.TCP_OK {
-		fmt.Println("✔ TCP connection successful")
+		fmt.Printf("✔ TCP connection successful (%d ms)\n", r.TCP_MS)
 	} else {
-		fmt.Println("❌ TCP connection failed")
+		fmt.Printf("❌ TCP connection failed (%d ms)\n", r.TCP_MS)
 	}
 
 	if r.HTTP_OK {
-		fmt.Println("✔ HTTP service responding")
+		fmt.Printf("✔ HTTP service responding (%d ms)\n", r.HTTP_MS)
 	} else {
-		fmt.Println("❌ HTTP request failed")
+		fmt.Printf("❌ HTTP request failed (%d ms)\n", r.HTTP_MS)
 	}
 
 	fmt.Println()
@@ -66,6 +73,7 @@ func DiagnosisMessage(r Result) string {
 	if r.DNS_OK && r.PING_OK && !r.TCP_OK && !r.HTTP_OK {
 		return "→ TCP port likely blocked or service down (no TCP + HTTP response)"
 	}
+
 	if r.DNS_OK && r.PING_OK && r.TCP_OK && !r.HTTP_OK {
 		return "→ TCP port is reachable, but the application or HTTP service may be failing"
 	}
