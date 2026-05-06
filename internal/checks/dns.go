@@ -3,9 +3,12 @@ package checks
 import (
 	"fmt"
 	"net"
+	"time"
 )
 
-func ResolveDNS(target string, verbose bool) (bool, string) {
+func ResolveDNS(target string, timeout, retries int, verbose bool) (bool, string, int64) {
+	start := time.Now()
+
 	if verbose {
 		fmt.Println("[DNS] Checking:", target)
 	}
@@ -20,7 +23,7 @@ func ResolveDNS(target string, verbose bool) (bool, string) {
 			fmt.Println(" - misconfigured resolver")
 			fmt.Println("Error:", err)
 		}
-		return false, ""
+		return false, "", time.Since(start).Milliseconds()
 	}
 
 	if len(ips) == 0 {
@@ -30,7 +33,7 @@ func ResolveDNS(target string, verbose bool) (bool, string) {
 			fmt.Println(" - DNS misconfiguration")
 			fmt.Println(" - domain has no A/AAAA records")
 		}
-		return false, ""
+		return false, "", time.Since(start).Milliseconds()
 	}
 
 	primaryIP := ""
@@ -53,5 +56,5 @@ func ResolveDNS(target string, verbose bool) (bool, string) {
 		fmt.Println("Primary IP:", primaryIP)
 	}
 
-	return true, primaryIP
+	return true, primaryIP, time.Since(start).Milliseconds()
 }

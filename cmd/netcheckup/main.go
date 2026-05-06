@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"sync"
-	"time"
 
 	"github.com/geeee1477/netcheckup/internal/checks"
 )
@@ -47,44 +46,30 @@ func main() {
 	var (
 		dnsOK, pingOK, tcpOK, httpOK bool
 		primaryIP                    string
-
 		dnsMS, pingMS, tcpMS, httpMS int64
-
-		wg sync.WaitGroup
+		wg                           sync.WaitGroup
 	)
 
 	wg.Add(4)
 
-	// DNS
 	go func() {
 		defer wg.Done()
-		start := time.Now()
-		dnsOK, primaryIP = checks.ResolveDNS(target, verbose)
-		dnsMS = time.Since(start).Milliseconds()
+		dnsOK, primaryIP, dnsMS = checks.ResolveDNS(target, *timeout, *retries, verbose)
 	}()
 
-	// PING
 	go func() {
 		defer wg.Done()
-		start := time.Now()
-		pingOK = checks.CheckPing(target, verbose)
-		pingMS = time.Since(start).Milliseconds()
+		pingOK, pingMS = checks.CheckPing(target, *timeout, *retries, verbose)
 	}()
 
-	// TCP
 	go func() {
 		defer wg.Done()
-		start := time.Now()
-		tcpOK = checks.CheckTCP(target, *port, *timeout, *retries, verbose)
-		tcpMS = time.Since(start).Milliseconds()
+		tcpOK, tcpMS = checks.CheckTCP(target, *port, *timeout, *retries, verbose)
 	}()
 
-	// HTTP
 	go func() {
 		defer wg.Done()
-		start := time.Now()
-		httpOK = checks.CheckHTTP(target, *port, *timeout, *retries, verbose)
-		httpMS = time.Since(start).Milliseconds()
+		httpOK, httpMS = checks.CheckHTTP(target, *port, *timeout, *retries, verbose)
 	}()
 
 	wg.Wait()
@@ -96,19 +81,27 @@ func main() {
 		PING_OK:   pingOK,
 		TCP_OK:    tcpOK,
 		HTTP_OK:   httpOK,
-
-		DNS_MS:  dnsMS,
-		PING_MS: pingMS,
-		TCP_MS:  tcpMS,
-		HTTP_MS: httpMS,
+		DNS_MS:    dnsMS,
+		PING_MS:   pingMS,
+		TCP_MS:    tcpMS,
+		HTTP_MS:   httpMS,
 	}
 
 	if *jsonFlag {
 		result.Diagnosis = checks.DiagnosisCode(result)
 		checks.PrintJSON(result)
+
+		if !result.DNS_OK || !result.PING_OK || !result.TCP_OK || !result.HTTP_OK {
+			os.Exit(1)
+		}
+
 		return
 	}
 
 	result.Diagnosis = checks.DiagnosisMessage(result)
 	checks.PrintSummary(result)
+
+	if !result.DNS_OK || !result.PING_OK || !result.TCP_OK || !result.HTTP_OK {
+		os.Exit(1)
+	}
 }

@@ -6,7 +6,9 @@ import (
 	"time"
 )
 
-func CheckHTTP(target string, port string, timeoutSeconds int, retries int, verbose bool) bool {
+func CheckHTTP(target string, port string, timeoutSeconds int, retries int, verbose bool) (bool, int64) {
+	start := time.Now()
+
 	url := "https://" + target
 	if port != "443" {
 		url = "http://" + target + ":" + port
@@ -31,7 +33,7 @@ func CheckHTTP(target string, port string, timeoutSeconds int, retries int, verb
 				fmt.Println("Status:", resp.Status)
 			}
 
-			return true
+			return resp.StatusCode < 500, time.Since(start).Milliseconds()
 		}
 
 		if verbose {
@@ -48,5 +50,5 @@ func CheckHTTP(target string, port string, timeoutSeconds int, retries int, verb
 		fmt.Println(" - firewall or proxy blocking")
 	}
 
-	return false
+	return false, time.Since(start).Milliseconds()
 }
