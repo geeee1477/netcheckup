@@ -14,6 +14,7 @@ func main() {
 	timeout := flag.Int("timeout", 3, "Timeout in seconds (default: 3)")
 	retries := flag.Int("retries", 2, "Number of retries (default: 2)")
 	jsonFlag := flag.Bool("json", false, "Output as JSON")
+	quietFlag := flag.Bool("quiet", false, "Hide verbose logs")
 
 	flag.Usage = func() {
 		fmt.Println("netcheckup - network diagnostic tool")
@@ -37,7 +38,7 @@ func main() {
 	}
 
 	target := flag.Arg(0)
-	verbose := !*jsonFlag
+	verbose := !*jsonFlag && !*quietFlag
 
 	if verbose {
 		fmt.Println("netcheckup starting...\n")
