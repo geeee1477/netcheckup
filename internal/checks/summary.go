@@ -20,6 +20,7 @@ type Result struct {
 	HTTP_MS    int64            `json:"http_ms,omitempty"`
 	TLS        TLSResult        `json:"tls,omitempty"`
 	Traceroute TracerouteResult `json:"traceroute,omitempty"`
+	PacketLoss PacketLossResult `json:"packet_loss,omitempty"`
 
 	Diagnosis string `json:"diagnosis"`
 }
@@ -77,12 +78,27 @@ func PrintSummary(r Result) {
 		}
 	}
 
+	if r.PacketLoss.Enabled {
+		fmt.Println()
+
+		if r.PacketLoss.OK {
+			fmt.Printf("✔ Packet loss OK (%d ms)\n", r.PacketLoss.DurationMS)
+		} else {
+			fmt.Printf("❌ Packet loss detected (%d ms)\n", r.PacketLoss.DurationMS)
+		}
+
+		fmt.Printf("  Loss: %d%%\n", r.PacketLoss.LossPercent)
+		fmt.Printf("  Packets: %d sent / %d received\n",
+			r.PacketLoss.Sent,
+			r.PacketLoss.Received,
+		)
+	}
+
 	fmt.Println()
 	fmt.Println(DiagnosisMessage(r))
 }
 
 func DiagnosisMessage(r Result) string {
-
 	if !r.DNS_OK {
 		return "→ Likely DNS or general connectivity issue"
 	}

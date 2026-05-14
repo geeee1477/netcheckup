@@ -17,6 +17,7 @@ func main() {
 	jsonFlag := flag.Bool("json", false, "Output as JSON")
 	tlsFlag := flag.Bool("tls", false, "Run TLS certificate inspection")
 	tracerouteFlag := flag.Bool("traceroute", false, "Run traceroute")
+	packetLossFlag := flag.Bool("packet-loss", false, "Run packet loss analysis")
 	versionFlag := flag.Bool("version", false, "Show version")
 	quietFlag := flag.Bool("quiet", false, "Hide verbose logs")
 
@@ -34,6 +35,7 @@ func main() {
 		fmt.Println("  netcheckup --retries 3 google.com")
 		fmt.Println("  netcheckup --json google.com")
 		fmt.Println("  netcheckup --traceroute google.com")
+		fmt.Println("  netcheckup --packet-loss google.com")
 
 	}
 
@@ -62,6 +64,7 @@ func main() {
 		dnsMS, pingMS, tcpMS, httpMS int64
 		tlsResult                    checks.TLSResult
 		tracerouteResult             checks.TracerouteResult
+		packetLossResult             checks.PacketLossResult
 		wg                           sync.WaitGroup
 	)
 
@@ -97,6 +100,10 @@ func main() {
 		tracerouteResult = checks.RunTraceroute(target, *timeout, verbose)
 	}
 
+	if *packetLossFlag {
+		packetLossResult = checks.CheckPacketLoss(target, 5, *timeout, verbose)
+	}
+
 	result := checks.Result{
 		Target:     target,
 		PrimaryIP:  primaryIP,
@@ -110,6 +117,7 @@ func main() {
 		HTTP_MS:    httpMS,
 		TLS:        tlsResult,
 		Traceroute: tracerouteResult,
+		PacketLoss: packetLossResult,
 	}
 
 	if *jsonFlag {
