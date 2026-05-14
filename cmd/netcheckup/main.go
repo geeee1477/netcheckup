@@ -16,6 +16,7 @@ func main() {
 	retries := flag.Int("retries", 2, "Number of retries (default: 2)")
 	jsonFlag := flag.Bool("json", false, "Output as JSON")
 	tlsFlag := flag.Bool("tls", false, "Run TLS certificate inspection")
+	tracerouteFlag := flag.Bool("traceroute", false, "Run traceroute")
 	versionFlag := flag.Bool("version", false, "Show version")
 	quietFlag := flag.Bool("quiet", false, "Hide verbose logs")
 
@@ -32,6 +33,8 @@ func main() {
 		fmt.Println("  netcheckup --timeout 2 google.com")
 		fmt.Println("  netcheckup --retries 3 google.com")
 		fmt.Println("  netcheckup --json google.com")
+		fmt.Println("  netcheckup --traceroute google.com")
+
 	}
 
 	flag.Parse()
@@ -58,6 +61,7 @@ func main() {
 		primaryIP                    string
 		dnsMS, pingMS, tcpMS, httpMS int64
 		tlsResult                    checks.TLSResult
+		tracerouteResult             checks.TracerouteResult
 		wg                           sync.WaitGroup
 	)
 
@@ -89,18 +93,23 @@ func main() {
 		tlsResult = checks.CheckTLS(target, *port, *timeout, verbose)
 	}
 
+	if *tracerouteFlag {
+		tracerouteResult = checks.RunTraceroute(target, *timeout, verbose)
+	}
+
 	result := checks.Result{
-		Target:    target,
-		PrimaryIP: primaryIP,
-		DNS_OK:    dnsOK,
-		PING_OK:   pingOK,
-		TCP_OK:    tcpOK,
-		HTTP_OK:   httpOK,
-		DNS_MS:    dnsMS,
-		PING_MS:   pingMS,
-		TCP_MS:    tcpMS,
-		HTTP_MS:   httpMS,
-		TLS:       tlsResult,
+		Target:     target,
+		PrimaryIP:  primaryIP,
+		DNS_OK:     dnsOK,
+		PING_OK:    pingOK,
+		TCP_OK:     tcpOK,
+		HTTP_OK:    httpOK,
+		DNS_MS:     dnsMS,
+		PING_MS:    pingMS,
+		TCP_MS:     tcpMS,
+		HTTP_MS:    httpMS,
+		TLS:        tlsResult,
+		Traceroute: tracerouteResult,
 	}
 
 	if *jsonFlag {
