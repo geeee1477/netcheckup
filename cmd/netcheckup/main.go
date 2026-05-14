@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/geeee1477/netcheckup/internal/checks"
+	"github.com/geeee1477/netcheckup/internal/version"
 )
 
 func main() {
@@ -14,6 +15,7 @@ func main() {
 	timeout := flag.Int("timeout", 3, "Timeout in seconds (default: 3)")
 	retries := flag.Int("retries", 2, "Number of retries (default: 2)")
 	jsonFlag := flag.Bool("json", false, "Output as JSON")
+	versionFlag := flag.Bool("version", false, "Show version")
 	quietFlag := flag.Bool("quiet", false, "Hide verbose logs")
 
 	flag.Usage = func() {
@@ -32,6 +34,11 @@ func main() {
 
 	flag.Parse()
 
+	if *versionFlag {
+		fmt.Println("netcheckup version", version.Version)
+		return
+	}
+
 	if flag.NArg() < 1 {
 		flag.Usage()
 		os.Exit(1)
@@ -42,6 +49,8 @@ func main() {
 
 	if verbose {
 		fmt.Println("netcheckup starting...\n")
+		fmt.Println("  netcheckup --version")
+
 	}
 
 	var (
