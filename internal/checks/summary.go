@@ -14,10 +14,11 @@ type Result struct {
 	TCP_OK  bool `json:"tcp_ok"`
 	HTTP_OK bool `json:"http_ok"`
 
-	DNS_MS  int64 `json:"dns_ms,omitempty"`
-	PING_MS int64 `json:"ping_ms,omitempty"`
-	TCP_MS  int64 `json:"tcp_ms,omitempty"`
-	HTTP_MS int64 `json:"http_ms,omitempty"`
+	DNS_MS  int64     `json:"dns_ms,omitempty"`
+	PING_MS int64     `json:"ping_ms,omitempty"`
+	TCP_MS  int64     `json:"tcp_ms,omitempty"`
+	HTTP_MS int64     `json:"http_ms,omitempty"`
+	TLS     TLSResult `json:"tls,omitempty"`
 
 	Diagnosis string `json:"diagnosis"`
 }
@@ -49,11 +50,26 @@ func PrintSummary(r Result) {
 		fmt.Printf("❌ HTTP request failed (%d ms)\n", r.HTTP_MS)
 	}
 
+	if r.TLS.Enabled {
+		fmt.Println()
+
+		if r.TLS.OK {
+			fmt.Printf("✔ TLS certificate valid (%d ms)\n", r.TLS.DurationMS)
+			fmt.Println("  Issuer:", r.TLS.Issuer)
+			fmt.Println("  Subject:", r.TLS.Subject)
+			fmt.Println("  Expires in:", r.TLS.DaysLeft, "days")
+		} else {
+			fmt.Printf("❌ TLS certificate invalid (%d ms)\n", r.TLS.DurationMS)
+			fmt.Println("  Error:", r.TLS.Error)
+		}
+	}
+
 	fmt.Println()
 	fmt.Println(DiagnosisMessage(r))
 }
 
 func DiagnosisMessage(r Result) string {
+
 	if !r.DNS_OK {
 		return "→ Likely DNS or general connectivity issue"
 	}

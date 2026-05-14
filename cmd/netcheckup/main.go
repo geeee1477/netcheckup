@@ -15,6 +15,7 @@ func main() {
 	timeout := flag.Int("timeout", 3, "Timeout in seconds (default: 3)")
 	retries := flag.Int("retries", 2, "Number of retries (default: 2)")
 	jsonFlag := flag.Bool("json", false, "Output as JSON")
+	tlsFlag := flag.Bool("tls", false, "Run TLS certificate inspection")
 	versionFlag := flag.Bool("version", false, "Show version")
 	quietFlag := flag.Bool("quiet", false, "Hide verbose logs")
 
@@ -25,6 +26,7 @@ func main() {
 		fmt.Println("  netcheckup [--port <port>] [--timeout <seconds>] [--retries <n>] [--json] <target>")
 		fmt.Println()
 		fmt.Println("Examples:")
+		fmt.Println("  netcheckup --tls google.com")
 		fmt.Println("  netcheckup google.com")
 		fmt.Println("  netcheckup --port 80 google.com")
 		fmt.Println("  netcheckup --timeout 2 google.com")
@@ -49,14 +51,13 @@ func main() {
 
 	if verbose {
 		fmt.Println("netcheckup starting...\n")
-		fmt.Println("  netcheckup --version")
-
 	}
 
 	var (
 		dnsOK, pingOK, tcpOK, httpOK bool
 		primaryIP                    string
 		dnsMS, pingMS, tcpMS, httpMS int64
+		tlsResult                    checks.TLSResult
 		wg                           sync.WaitGroup
 	)
 
@@ -84,6 +85,10 @@ func main() {
 
 	wg.Wait()
 
+	if *tlsFlag {
+		tlsResult = checks.CheckTLS(target, *port, *timeout, verbose)
+	}
+
 	result := checks.Result{
 		Target:    target,
 		PrimaryIP: primaryIP,
@@ -95,6 +100,7 @@ func main() {
 		PING_MS:   pingMS,
 		TCP_MS:    tcpMS,
 		HTTP_MS:   httpMS,
+		TLS:       tlsResult,
 	}
 
 	if *jsonFlag {
