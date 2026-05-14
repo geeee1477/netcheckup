@@ -1,60 +1,73 @@
 package checks
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"time"
 )
 
-func ResolveDNS(target string, timeout, retries int, verbose bool) (bool, string, int64) {
+func ResolveDNS(target string, dnsServer string, timeout, retries int, verbose bool) (bool, string, int64) {
 	start := time.Now()
 
 	if verbose {
 		fmt.Println("[DNS] Checking:", target)
 	}
 
-	ips, err := net.LookupHost(target)
+	resolver := &net.Resolver{}
+
+	if dnsServer != "" {
+		resolver = &net.Resolver{
+			PreferGo: true,
+			Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
+				d := net.Dialer{
+					Timeout: time.Duration(timeout) * time.Second,
+				}
+
+				return d.DialContext(ctx, "udp", dnsServer+":53")
+			},
+		}
+	}
+
+	ctx, cancel := context.WithTimeout(
+		context.Background(),
+		time.Duration(timeout)*time.Second,
+	)
+
+	defer cancel()
+
+	ips, err := resolver.LookupHost(ctx, target)
+
+	duration := time.Since(start).Milliseconds()
+
 	if err != nil {
 		if verbose {
 			fmt.Println("[DNS] ❌ Resolution failed")
-			fmt.Println("→ Possible causes:")
-			fmt.Println(" - DNS server unreachable")
-			fmt.Println(" - no internet connectivity")
-			fmt.Println(" - misconfigured resolver")
 			fmt.Println("Error:", err)
 		}
-		return false, "", time.Since(start).Milliseconds()
+
+		return false, "", duration
 	}
 
 	if len(ips) == 0 {
 		if verbose {
-			fmt.Println("[DNS] ⚠️ No IPs returned")
-			fmt.Println("→ Possible causes:")
-			fmt.Println(" - DNS misconfiguration")
-			fmt.Println(" - domain has no A/AAAA records")
+			fmt.Println("[DNS] ❌ No IPs returned")
 		}
-		return false, "", time.Since(start).Milliseconds()
+
+		return false, "", duration
 	}
 
-	primaryIP := ""
-	for _, ip := range ips {
-		parsed := net.ParseIP(ip)
-		if parsed != nil && parsed.To4() != nil && !parsed.IsPrivate() {
-			primaryIP = ip
-			break
-		}
-	}
-
-	if primaryIP == "" {
-		primaryIP = ips[0]
-	}
+	primaryIP := ips[0]
 
 	if verbose {
 		fmt.Println("[DNS] ✅ Resolution successful")
-		fmt.Println("→ DNS is working correctly")
 		fmt.Println("Resolved IPs:", len(ips), "found")
 		fmt.Println("Primary IP:", primaryIP)
+
+		if dnsServer != "" {
+			fmt.Println("DNS Server:", dnsServer)
+		}
 	}
 
-	return true, primaryIP, time.Since(start).Milliseconds()
+	return true, primaryIP, duration
 }

@@ -18,6 +18,7 @@ func main() {
 	tlsFlag := flag.Bool("tls", false, "Run TLS certificate inspection")
 	tracerouteFlag := flag.Bool("traceroute", false, "Run traceroute")
 	packetLossFlag := flag.Bool("packet-loss", false, "Run packet loss analysis")
+	dnsServerFlag := flag.String("dns-server", "", "Custom DNS server")
 	versionFlag := flag.Bool("version", false, "Show version")
 	quietFlag := flag.Bool("quiet", false, "Hide verbose logs")
 
@@ -36,6 +37,7 @@ func main() {
 		fmt.Println("  netcheckup --json google.com")
 		fmt.Println("  netcheckup --traceroute google.com")
 		fmt.Println("  netcheckup --packet-loss google.com")
+		fmt.Println("  netcheckup --dns-server 1.1.1.1 google.com")
 
 	}
 
@@ -74,7 +76,13 @@ func main() {
 
 		go func() {
 			defer wg.Done()
-			dnsOK, primaryIP, dnsMS = checks.ResolveDNS(target, *timeout, *retries, verbose)
+			dnsOK, primaryIP, dnsMS = checks.ResolveDNS(
+				target,
+				*dnsServerFlag,
+				*timeout,
+				*retries,
+				verbose,
+			)
 		}()
 
 		go func() {
