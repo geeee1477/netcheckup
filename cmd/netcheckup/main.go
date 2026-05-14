@@ -51,90 +51,93 @@ func main() {
 		os.Exit(1)
 	}
 
-	target := flag.Arg(0)
+	targets := flag.Args()
 	verbose := !*jsonFlag && !*quietFlag
 
-	if verbose {
-		fmt.Println("netcheckup starting...\n")
-	}
+	for _, target := range targets {
 
-	var (
-		dnsOK, pingOK, tcpOK, httpOK bool
-		primaryIP                    string
-		dnsMS, pingMS, tcpMS, httpMS int64
-		tlsResult                    checks.TLSResult
-		tracerouteResult             checks.TracerouteResult
-		packetLossResult             checks.PacketLossResult
-		wg                           sync.WaitGroup
-	)
+		if verbose {
+			fmt.Println("netcheckup starting...\n")
+		}
 
-	wg.Add(4)
+		var (
+			dnsOK, pingOK, tcpOK, httpOK bool
+			primaryIP                    string
+			dnsMS, pingMS, tcpMS, httpMS int64
+			tlsResult                    checks.TLSResult
+			tracerouteResult             checks.TracerouteResult
+			packetLossResult             checks.PacketLossResult
+			wg                           sync.WaitGroup
+		)
 
-	go func() {
-		defer wg.Done()
-		dnsOK, primaryIP, dnsMS = checks.ResolveDNS(target, *timeout, *retries, verbose)
-	}()
+		wg.Add(4)
 
-	go func() {
-		defer wg.Done()
-		pingOK, pingMS = checks.CheckPing(target, *timeout, *retries, verbose)
-	}()
+		go func() {
+			defer wg.Done()
+			dnsOK, primaryIP, dnsMS = checks.ResolveDNS(target, *timeout, *retries, verbose)
+		}()
 
-	go func() {
-		defer wg.Done()
-		tcpOK, tcpMS = checks.CheckTCP(target, *port, *timeout, *retries, verbose)
-	}()
+		go func() {
+			defer wg.Done()
+			pingOK, pingMS = checks.CheckPing(target, *timeout, *retries, verbose)
+		}()
 
-	go func() {
-		defer wg.Done()
-		httpOK, httpMS = checks.CheckHTTP(target, *port, *timeout, *retries, verbose)
-	}()
+		go func() {
+			defer wg.Done()
+			tcpOK, tcpMS = checks.CheckTCP(target, *port, *timeout, *retries, verbose)
+		}()
 
-	wg.Wait()
+		go func() {
+			defer wg.Done()
+			httpOK, httpMS = checks.CheckHTTP(target, *port, *timeout, *retries, verbose)
+		}()
 
-	if *tlsFlag {
-		tlsResult = checks.CheckTLS(target, *port, *timeout, verbose)
-	}
+		wg.Wait()
 
-	if *tracerouteFlag {
-		tracerouteResult = checks.RunTraceroute(target, *timeout, verbose)
-	}
+		if *tlsFlag {
+			tlsResult = checks.CheckTLS(target, *port, *timeout, verbose)
+		}
 
-	if *packetLossFlag {
-		packetLossResult = checks.CheckPacketLoss(target, 5, *timeout, verbose)
-	}
+		if *tracerouteFlag {
+			tracerouteResult = checks.RunTraceroute(target, *timeout, verbose)
+		}
 
-	result := checks.Result{
-		Target:     target,
-		PrimaryIP:  primaryIP,
-		DNS_OK:     dnsOK,
-		PING_OK:    pingOK,
-		TCP_OK:     tcpOK,
-		HTTP_OK:    httpOK,
-		DNS_MS:     dnsMS,
-		PING_MS:    pingMS,
-		TCP_MS:     tcpMS,
-		HTTP_MS:    httpMS,
-		TLS:        tlsResult,
-		Traceroute: tracerouteResult,
-		PacketLoss: packetLossResult,
-	}
+		if *packetLossFlag {
+			packetLossResult = checks.CheckPacketLoss(target, 5, *timeout, verbose)
+		}
 
-	if *jsonFlag {
-		result.Diagnosis = checks.DiagnosisCode(result)
-		checks.PrintJSON(result)
+		result := checks.Result{
+			Target:     target,
+			PrimaryIP:  primaryIP,
+			DNS_OK:     dnsOK,
+			PING_OK:    pingOK,
+			TCP_OK:     tcpOK,
+			HTTP_OK:    httpOK,
+			DNS_MS:     dnsMS,
+			PING_MS:    pingMS,
+			TCP_MS:     tcpMS,
+			HTTP_MS:    httpMS,
+			TLS:        tlsResult,
+			Traceroute: tracerouteResult,
+			PacketLoss: packetLossResult,
+		}
+
+		if *jsonFlag {
+			result.Diagnosis = checks.DiagnosisCode(result)
+			checks.PrintJSON(result)
+
+			if !result.DNS_OK || !result.PING_OK || !result.TCP_OK || !result.HTTP_OK {
+				os.Exit(1)
+			}
+
+			continue
+		}
+
+		result.Diagnosis = checks.DiagnosisMessage(result)
+		checks.PrintSummary(result)
 
 		if !result.DNS_OK || !result.PING_OK || !result.TCP_OK || !result.HTTP_OK {
 			os.Exit(1)
 		}
-
-		return
-	}
-
-	result.Diagnosis = checks.DiagnosisMessage(result)
-	checks.PrintSummary(result)
-
-	if !result.DNS_OK || !result.PING_OK || !result.TCP_OK || !result.HTTP_OK {
-		os.Exit(1)
 	}
 }
