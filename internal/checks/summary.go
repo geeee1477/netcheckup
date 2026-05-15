@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+
+	"github.com/geeee1477/netcheckup/internal/diagnosis"
 )
 
 type Result struct {
@@ -101,79 +103,38 @@ func PrintSummary(r Result) {
 
 		fmt.Printf("✔ Port scan completed (%d ms)\n", r.PortScan.DurationMS)
 
-		fmt.Println("  Open ports:", strings.Join(r.PortScan.OpenPorts, ", "))
+		if len(r.PortScan.OpenPorts) > 0 {
+			fmt.Println("  Open ports:", strings.Join(r.PortScan.OpenPorts, ", "))
+		}
 
 		if len(r.PortScan.ClosedPorts) > 0 {
 			fmt.Println("  Closed ports:", strings.Join(r.PortScan.ClosedPorts, ", "))
 		}
 	}
 
-	fmt.Println()
-	fmt.Println(DiagnosisMessage(r))
+	PrintDiagnosisDetails(r)
 }
 
 func DiagnosisMessage(r Result) string {
-	if !r.DNS_OK {
-		return "→ Likely DNS or general connectivity issue"
-	}
+	d := diagnosis.Analyze(diagnosis.CheckInput{
+		DNSOK:  r.DNS_OK,
+		PingOK: r.PING_OK,
+		TCPOK:  r.TCP_OK,
+		HTTPOK: r.HTTP_OK,
+	})
 
-	if r.DNS_OK && !r.PING_OK && r.TCP_OK && r.HTTP_OK {
-		return "→ Host blocks ICMP/ping, but TCP and HTTP are working"
-	}
-
-	if r.DNS_OK && !r.PING_OK && !r.TCP_OK && !r.HTTP_OK {
-		return "→ Host not reachable at network level (routing, firewall, or offline)"
-	}
-
-	if r.DNS_OK && !r.PING_OK && r.TCP_OK && !r.HTTP_OK {
-		return "→ ICMP is blocked and HTTP service may be failing"
-	}
-
-	if r.DNS_OK && r.PING_OK && !r.TCP_OK && !r.HTTP_OK {
-		return "→ TCP port likely blocked or service down (no TCP + HTTP response)"
-	}
-
-	if r.DNS_OK && r.PING_OK && r.TCP_OK && !r.HTTP_OK {
-		return "→ TCP port is reachable, but the application or HTTP service may be failing"
-	}
-
-	if r.DNS_OK && r.PING_OK && r.TCP_OK && r.HTTP_OK {
-		return "→ Target is fully reachable and functioning"
-	}
-
-	return "→ No clear diagnosis available"
+	return "→ " + d.Summary
 }
 
 func DiagnosisCode(r Result) string {
-	if !r.DNS_OK {
-		return "dns_or_connectivity_issue"
-	}
+	d := diagnosis.Analyze(diagnosis.CheckInput{
+		DNSOK:  r.DNS_OK,
+		PingOK: r.PING_OK,
+		TCPOK:  r.TCP_OK,
+		HTTPOK: r.HTTP_OK,
+	})
 
-	if r.DNS_OK && !r.PING_OK && r.TCP_OK && r.HTTP_OK {
-		return "icmp_blocked_service_reachable"
-	}
-
-	if r.DNS_OK && !r.PING_OK && !r.TCP_OK && !r.HTTP_OK {
-		return "network_routing_firewall_or_offline"
-	}
-
-	if r.DNS_OK && !r.PING_OK && r.TCP_OK && !r.HTTP_OK {
-		return "icmp_blocked_http_failing"
-	}
-
-	if r.DNS_OK && r.PING_OK && !r.TCP_OK && !r.HTTP_OK {
-		return "tcp_port_blocked_or_service_down"
-	}
-
-	if r.DNS_OK && r.PING_OK && r.TCP_OK && !r.HTTP_OK {
-		return "http_service_failing"
-	}
-
-	if r.DNS_OK && r.PING_OK && r.TCP_OK && r.HTTP_OK {
-		return "target_fully_reachable"
-	}
-
-	return "unknown"
+	return d.Code
 }
 
 func PrintJSON(r Result) {
@@ -193,4 +154,37 @@ func JSONString(r Result) (string, error) {
 	}
 
 	return string(data), nil
+}
+
+func PrintDiagnosisDetails(r Result) {
+	d := diagnosis.Analyze(diagnosis.CheckInput{
+		DNSOK:  r.DNS_OK,
+		PingOK: r.PING_OK,
+		TCPOK:  r.TCP_OK,
+		HTTPOK: r.HTTP_OK,
+	})
+
+	fmt.Println()
+	fmt.Println("========== DIAGNOSIS ==========")
+	fmt.Println("Severity:", d.Severity)
+	fmt.Println("Summary:", d.Summary)
+	fmt.Println()
+	fmt.Println("Explanation:")
+	fmt.Println(d.Explanation)
+
+	if len(d.LikelyCauses) > 0 {
+		fmt.Println()
+		fmt.Println("Likely causes:")
+		for _, cause := range d.LikelyCauses {
+			fmt.Println("-", cause)
+		}
+	}
+
+	if len(d.NextSteps) > 0 {
+		fmt.Println()
+		fmt.Println("Recommended next steps:")
+		for i, step := range d.NextSteps {
+			fmt.Printf("%d. %s\n", i+1, step)
+		}
+	}
 }
