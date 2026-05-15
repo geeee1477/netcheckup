@@ -38,6 +38,32 @@ The tool provides both human-readable summaries and machine-readable JSON output
 go run cmd/netcheckup/main.go google.com
 ```
 
+### Docker
+
+Build image:
+
+```bash
+docker build -t netcheckup .
+```
+
+Run container:
+
+```bash
+docker run --rm netcheckup google.com
+```
+
+Example with TLS:
+
+```bash
+docker run --rm netcheckup --tls google.com
+```
+
+Example with port scan:
+
+```bash
+docker run --rm netcheckup --scan google.com
+```
+
 ## Install globally
 
 ```bash
