@@ -64,7 +64,8 @@ func main() {
 
 	for _, target := range targets {
 		if verbose {
-			fmt.Println("netcheckup starting...\n")
+			fmt.Println("netcheckup starting...")
+			fmt.Println()
 		}
 
 		var (
