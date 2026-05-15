@@ -3,6 +3,7 @@ package checks
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 )
 
 type Result struct {
@@ -21,6 +22,7 @@ type Result struct {
 	TLS        TLSResult        `json:"tls,omitempty"`
 	Traceroute TracerouteResult `json:"traceroute,omitempty"`
 	PacketLoss PacketLossResult `json:"packet_loss,omitempty"`
+	PortScan   PortScanResult   `json:"port_scan,omitempty"`
 
 	Diagnosis string `json:"diagnosis"`
 }
@@ -92,6 +94,18 @@ func PrintSummary(r Result) {
 			r.PacketLoss.Sent,
 			r.PacketLoss.Received,
 		)
+	}
+
+	if r.PortScan.Enabled {
+		fmt.Println()
+
+		fmt.Printf("✔ Port scan completed (%d ms)\n", r.PortScan.DurationMS)
+
+		fmt.Println("  Open ports:", strings.Join(r.PortScan.OpenPorts, ", "))
+
+		if len(r.PortScan.ClosedPorts) > 0 {
+			fmt.Println("  Closed ports:", strings.Join(r.PortScan.ClosedPorts, ", "))
+		}
 	}
 
 	fmt.Println()

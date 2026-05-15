@@ -19,6 +19,8 @@ func main() {
 	tracerouteFlag := flag.Bool("traceroute", false, "Run traceroute")
 	packetLossFlag := flag.Bool("packet-loss", false, "Run packet loss analysis")
 	dnsServerFlag := flag.String("dns-server", "", "Custom DNS server")
+	scanFlag := flag.Bool("scan", false, "Run port scan")
+	scanPortsFlag := flag.String("ports", "80,443,22", "Ports to scan")
 	versionFlag := flag.Bool("version", false, "Show version")
 	quietFlag := flag.Bool("quiet", false, "Hide verbose logs")
 
@@ -38,6 +40,8 @@ func main() {
 		fmt.Println("  netcheckup --traceroute google.com")
 		fmt.Println("  netcheckup --packet-loss google.com")
 		fmt.Println("  netcheckup --dns-server 1.1.1.1 google.com")
+		fmt.Println("  netcheckup --scan google.com")
+		fmt.Println("  netcheckup --scan --ports 80,443,22 github.com")
 
 	}
 
@@ -69,6 +73,7 @@ func main() {
 			tlsResult                    checks.TLSResult
 			tracerouteResult             checks.TracerouteResult
 			packetLossResult             checks.PacketLossResult
+			portScanResult               checks.PortScanResult
 			wg                           sync.WaitGroup
 		)
 
@@ -114,6 +119,15 @@ func main() {
 			packetLossResult = checks.CheckPacketLoss(target, 5, *timeout, verbose)
 		}
 
+		if *scanFlag {
+			portScanResult = checks.ScanPorts(
+				target,
+				*scanPortsFlag,
+				*timeout,
+				verbose,
+			)
+		}
+
 		result := checks.Result{
 			Target:     target,
 			PrimaryIP:  primaryIP,
@@ -128,6 +142,7 @@ func main() {
 			TLS:        tlsResult,
 			Traceroute: tracerouteResult,
 			PacketLoss: packetLossResult,
+			PortScan:   portScanResult,
 		}
 
 		if *jsonFlag {
