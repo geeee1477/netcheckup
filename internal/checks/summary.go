@@ -185,3 +185,12 @@ func PrintJSON(r Result) {
 
 	fmt.Println(string(data))
 }
+
+func JSONString(r Result) (string, error) {
+	data, err := json.MarshalIndent(r, "", "  ")
+	if err != nil {
+		return "", err
+	}
+
+	return string(data), nil
+}

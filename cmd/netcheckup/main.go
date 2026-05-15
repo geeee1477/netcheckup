@@ -21,6 +21,7 @@ func main() {
 	dnsServerFlag := flag.String("dns-server", "", "Custom DNS server")
 	scanFlag := flag.Bool("scan", false, "Run port scan")
 	scanPortsFlag := flag.String("ports", "80,443,22", "Ports to scan")
+	outputFlag := flag.String("output", "", "Write output to file")
 	versionFlag := flag.Bool("version", false, "Show version")
 	quietFlag := flag.Bool("quiet", false, "Hide verbose logs")
 
@@ -28,11 +29,11 @@ func main() {
 		fmt.Println("netcheckup - network diagnostic tool")
 		fmt.Println()
 		fmt.Println("Usage:")
-		fmt.Println("  netcheckup [--port <port>] [--timeout <seconds>] [--retries <n>] [--json] <target>")
+		fmt.Println("  netcheckup [--port <port>] [--timeout <seconds>] [--retries <n>] [--json] [--output <file>] <target> [target...]")
 		fmt.Println()
 		fmt.Println("Examples:")
-		fmt.Println("  netcheckup --tls google.com")
 		fmt.Println("  netcheckup google.com")
+		fmt.Println("  netcheckup --tls google.com")
 		fmt.Println("  netcheckup --port 80 google.com")
 		fmt.Println("  netcheckup --timeout 2 google.com")
 		fmt.Println("  netcheckup --retries 3 google.com")
@@ -42,7 +43,7 @@ func main() {
 		fmt.Println("  netcheckup --dns-server 1.1.1.1 google.com")
 		fmt.Println("  netcheckup --scan google.com")
 		fmt.Println("  netcheckup --scan --ports 80,443,22 github.com")
-
+		fmt.Println("  netcheckup --json --output result.json google.com")
 	}
 
 	flag.Parse()
@@ -59,9 +60,9 @@ func main() {
 
 	targets := flag.Args()
 	verbose := !*jsonFlag && !*quietFlag
+	exitCode := 0
 
 	for _, target := range targets {
-
 		if verbose {
 			fmt.Println("netcheckup starting...\n")
 		}
@@ -147,10 +148,25 @@ func main() {
 
 		if *jsonFlag {
 			result.Diagnosis = checks.DiagnosisCode(result)
-			checks.PrintJSON(result)
+
+			jsonOutput, err := checks.JSONString(result)
+			if err != nil {
+				fmt.Println("JSON error:", err)
+				os.Exit(1)
+			}
+
+			if *outputFlag != "" {
+				err := os.WriteFile(*outputFlag, []byte(jsonOutput+"\n"), 0644)
+				if err != nil {
+					fmt.Println("Output error:", err)
+					os.Exit(1)
+				}
+			} else {
+				fmt.Println(jsonOutput)
+			}
 
 			if !result.DNS_OK || !result.PING_OK || !result.TCP_OK || !result.HTTP_OK {
-				os.Exit(1)
+				exitCode = 1
 			}
 
 			continue
@@ -160,7 +176,9 @@ func main() {
 		checks.PrintSummary(result)
 
 		if !result.DNS_OK || !result.PING_OK || !result.TCP_OK || !result.HTTP_OK {
-			os.Exit(1)
+			exitCode = 1
 		}
 	}
+
+	os.Exit(exitCode)
 }
