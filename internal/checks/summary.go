@@ -177,11 +177,18 @@ func PrintDiagnosisDetails(r Result) {
 	fmt.Println("========== DIAGNOSIS ==========")
 	fmt.Println("Severity:", d.Severity)
 	fmt.Println("Summary:", d.Summary)
+	fmt.Printf("Confidence: %d%%\n", d.Confidence)
 	fmt.Println()
 	fmt.Println("Explanation:")
 	fmt.Println(d.Explanation)
 
-	if len(d.LikelyCauses) > 0 {
+	if len(d.Possible) > 0 {
+		fmt.Println()
+		fmt.Println("Likely causes:")
+		for _, cause := range d.Possible {
+			fmt.Printf("- %s (%d%%)\n", cause.Name, cause.Confidence)
+		}
+	} else if len(d.LikelyCauses) > 0 {
 		fmt.Println()
 		fmt.Println("Likely causes:")
 		for _, cause := range d.LikelyCauses {
