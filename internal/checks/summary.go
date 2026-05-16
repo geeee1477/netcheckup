@@ -26,7 +26,7 @@ type Result struct {
 	PacketLoss PacketLossResult `json:"packet_loss,omitempty"`
 	PortScan   PortScanResult   `json:"port_scan,omitempty"`
 
-	Diagnosis string `json:"diagnosis"`
+	Diagnosis diagnosis.Diagnosis `json:"diagnosis"`
 }
 
 func PrintSummary(r Result) {
@@ -124,6 +124,15 @@ func DiagnosisMessage(r Result) string {
 	})
 
 	return "→ " + d.Summary
+}
+
+func DiagnosisObject(r Result) diagnosis.Diagnosis {
+	return diagnosis.Analyze(diagnosis.CheckInput{
+		DNSOK:  r.DNS_OK,
+		PingOK: r.PING_OK,
+		TCPOK:  r.TCP_OK,
+		HTTPOK: r.HTTP_OK,
+	})
 }
 
 func DiagnosisCode(r Result) string {

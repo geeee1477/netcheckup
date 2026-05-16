@@ -148,8 +148,7 @@ func main() {
 		}
 
 		if *jsonFlag {
-			result.Diagnosis = checks.DiagnosisCode(result)
-
+			result.Diagnosis = checks.DiagnosisObject(result)
 			jsonOutput, err := checks.JSONString(result)
 			if err != nil {
 				fmt.Println("JSON error:", err)
@@ -173,10 +172,10 @@ func main() {
 			continue
 		}
 
-		result.Diagnosis = checks.DiagnosisMessage(result)
 		checks.PrintSummary(result)
 
 		if !result.DNS_OK || !result.PING_OK || !result.TCP_OK || !result.HTTP_OK {
+			result.Diagnosis = checks.DiagnosisObject(result)
 			exitCode = 1
 		}
 	}
